@@ -5,6 +5,7 @@ import os
 
 from src.map_utils import build_erosion_map
 from streamlit_folium import st_folium
+from src.risk_model import score_zone
 
 API_URL = os.getenv("EROSION_API_URL", "http://localhost:8000")
 
@@ -15,11 +16,7 @@ st.caption(
     "and mangrove canopy loss across the Niger Delta coastline, served via FastAPI."
 )
 
-try:
-    requests.get(f"{API_URL}/health", timeout=3).json()
-    st.sidebar.success(f"API connected — {API_URL}")
-except requests.exceptions.RequestException:
-    st.sidebar.error(f"API not reachable at {API_URL}. Run `uvicorn api.main:app --reload` first.")
+st.sidebar.info("Running self-contained - no external API needed")
 
 st.divider()
 st.subheader("Score a coastal zone")
@@ -51,10 +48,11 @@ if submitted:
         "assessment_date": str(date_val),
     }
     try:
-        resp = requests.post(f"{API_URL}/score/zone", json=payload, timeout=10)
-        resp.raise_for_status()
-        result = resp.json()
-
+        result = score_zone(
+            net_erosion_pct=payload["net_erosion_pct"],
+            net_canopy_loss_pct=payload["net_canopy_loss_pct"],
+            years_observed=payload["years_observed"]
+        )
         level_color = {"Severe": "🔴", "Moderate": "🟠", "Low": "🟢"}
         st.metric(
             "Risk Score",
@@ -69,7 +67,7 @@ if submitted:
         new_row = pd.DataFrame([result])
         st.session_state["scored_zones"] = pd.concat([existing, new_row], ignore_index=True)
 
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         st.error(f"API call failed: {e}")
 
 st.divider()
