@@ -63,6 +63,10 @@ if submitted:
         c1.metric("Erosion rate", f"{result['annualized_erosion_pct_per_year']}%/yr")
         c2.metric("Canopy loss rate", f"{result['annualized_canopy_loss_pct_per_year']}%/yr")
 
+        result["latitude"] = lat
+        result["longitude"] = lon
+        result["zone_name"] = zone_name
+
         existing = st.session_state.get("scored_zones", pd.DataFrame())
         new_row = pd.DataFrame([result])
         st.session_state["scored_zones"] = pd.concat([existing, new_row], ignore_index=True)
