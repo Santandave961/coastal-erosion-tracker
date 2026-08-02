@@ -1,0 +1,5 @@
+.env
+sentinel2_tiles/
+__pycache__/
+checkpoints/
+*.pyc
